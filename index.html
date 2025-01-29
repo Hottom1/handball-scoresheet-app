@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handball Scoresheet App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <h1>Handball Scoresheet</h1>
+    
+    <!-- Match Information -->
+    <div class="section">
+      <h2>Match Information</h2>
+      <input type="text" id="date" placeholder="Date">
+      <input type="text" id="location" placeholder="Location">
+      <input type="text" id="teamA" placeholder="Team A" oninput="updateTeamName('teamA')">
+      <input type="text" id="teamB" placeholder="Team B" oninput="updateTeamName('teamB')">
+    </div>
+
+    <!-- Player List -->
+    <div class="section">
+      <h2 id="teamAName">Team A Roster</h2>
+      <table id="rosterA">
+        <tr><th>Number</th><th>Name</th><th>Actions</th></tr>
+      </table>
+      <button onclick="addPlayer('rosterA')">Add Player</button>
+    </div>
+    <div class="section">
+      <h2 id="teamBName">Team B Roster</h2>
+      <table id="rosterB">
+        <tr><th>Number</th><th>Name</th><th>Actions</th></tr>
+      </table>
+      <button onclick="addPlayer('rosterB')">Add Player</button>
+    </div>
+
+    <!-- Scorekeeping -->
+    <div class="section">
+      <h2>Scorekeeping</h2>
+      <p><span id="teamAScoreName">Team A</span>: <span id="scoreA">0</span></p>
+      <p><span id="teamBScoreName">Team B</span>: <span id="scoreB">0</span></p>
+    </div>
+
+    <!-- Timer -->
+    <div class="section">
+      <h2>Timer</h2>
+      <p id="timer">30:00</p>
+      <button onclick="startTimer()">Start</button>
+      <button onclick="stopTimer()">Stop</button>
+    </div>
+
+    <!-- Goalkeeper Stats -->
+    <div class="section">
+      <h2>Goalkeeper Stats</h2>
+      <div id="goalkeeperStats"></div>
+    </div>
+
+    <!-- Shooter Stats -->
+    <div class="section">
+      <h2>Shooter Stats</h2>
+      <div id="shooterStats"></div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="section">
+      <h2>Export</h2>
+      <button onclick="exportData()">Export as CSV</button>
+      <button onclick="emailData()">Email Data</button>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
