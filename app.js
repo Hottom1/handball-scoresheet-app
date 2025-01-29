@@ -39,8 +39,13 @@ function recordShot(rosterId, number, name, isGoal) {
         teamBScore++;
         document.getElementById('scoreB').textContent = teamBScore;
       }
+      // Update opposing goalkeeper's goals conceded
+      const opposingRosterId = rosterId === 'rosterA' ? 'rosterB' : 'rosterA';
+      const opposingPlayers = players.filter(p => p.rosterId === opposingRosterId);
+      opposingPlayers.forEach(p => p.goalsConceded++);
     }
     updateShooterStats();
+    updateGoalkeeperStats();
   }
 }
 
@@ -57,7 +62,7 @@ function recordSave(rosterId, number, name) {
 function updateGoalkeeperStats() {
   const statsDiv = document.getElementById('goalkeeperStats');
   statsDiv.innerHTML = '<h3>Goalkeepers</h3>';
-  players.filter(p => p.saves > 0).forEach(gk => {
+  players.filter(p => p.saves > 0 || p.goalsConceded > 0).forEach(gk => {
     statsDiv.innerHTML += `
       <p>${gk.name} (${gk.number}): Saves - ${gk.saves}, Goals Conceded - ${gk.goalsConceded}, Save % - ${((gk.saves / (gk.saves + gk.goalsConceded)) * 100 || 0).toFixed(2)}%</p>
     `;
@@ -104,6 +109,53 @@ function stopTimer() {
   clearInterval(interval);
 }
 
+// Reset Timer
+function resetTimer() {
+  clearInterval(interval);
+  timer = 1800;
+  document.getElementById('timer').textContent = '30:00';
+}
+
+// Upload Team List
+function uploadTeamList() {
+  const fileInput = document.getElementById('teamFile');
+  const file = fileInput.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const content = e.target.result;
+      const rows = content.split('\n');
+      rows.forEach(row => {
+        const [number, name, team] = row.split(',');
+        if (team && name && number) {
+          const rosterId = team.trim() === 'Team A' ? 'rosterA' : 'rosterB';
+          addPlayerFromCSV(rosterId, number.trim(), name.trim());
+        }
+      });
+    };
+    reader.readAsText(file);
+  }
+}
+
+// Add Player from CSV
+function addPlayerFromCSV(rosterId, number, name) {
+  const table = document.getElementById(rosterId);
+  const row = table.insertRow(-1);
+  const cell1 = row.insertCell(0);
+  const cell2 = row.insertCell(1);
+  const cell3 = row.insertCell(2);
+  cell1.textContent = number;
+  cell2.textContent = name;
+  cell3.innerHTML = `
+    <div class="actions">
+      <button onclick="recordShot('${rosterId}', ${number}, '${name}', true)">Goal Scored</button>
+      <button onclick="recordShot('${rosterId}', ${number}, '${name}', false)">Shot Missed</button>
+      <button onclick="recordSave('${rosterId}', ${number}, '${name}')">Save Made</button>
+    </div>
+  `;
+  players.push({ rosterId, number, name, shotsAttempted: 0, goalsScored: 0, saves: 0, goalsConceded: 0 });
+}
+
 // Export Data as CSV
 function exportData() {
   let csvContent = "data:text/csv;charset=utf-8,";
@@ -113,7 +165,7 @@ function exportData() {
   csvContent += `Team A: ${document.getElementById('teamA').value}\n`;
   csvContent += `Team B: ${document.getElementById('teamB').value}\n\n`;
   csvContent += "Goalkeeper Stats\n";
-  players.filter(p => p.saves > 0).forEach(gk => {
+  players.filter(p => p.saves > 0 || p.goalsConceded > 0).forEach(gk => {
     csvContent += `${gk.name} (${gk.number}): Saves - ${gk.saves}, Goals Conceded - ${gk.goalsConceded}, Save % - ${((gk.saves / (gk.saves + gk.goalsConceded)) * 100 || 0).toFixed(2)}%\n`;
   });
   csvContent += "\nShooter Stats\n";
@@ -131,6 +183,6 @@ function exportData() {
 // Email Data
 function emailData() {
   const subject = "Handball Scoresheet Data";
-  const body = `Match Information:\nDate: ${document.getElementById('date').value}\nLocation: ${document.getElementById('location').value}\nTeam A: ${document.getElementById('teamA').value}\nTeam B: ${document.getElementById('teamB').value}\n\nGoalkeeper Stats:\n${players.filter(p => p.saves > 0).map(gk => `${gk.name} (${gk.number}): Saves - ${gk.saves}, Goals Conceded - ${gk.goalsConceded}, Save % - ${((gk.saves / (gk.saves + gk.goalsConceded)) * 100 || 0).toFixed(2)}%`).join("\n")}\n\nShooter Stats:\n${players.filter(p => p.shotsAttempted > 0).map(sh => `${sh.name} (${sh.number}): Shots Attempted - ${sh.shotsAttempted}, Goals Scored - ${sh.goalsScored}, Shooting % - ${((sh.goalsScored / sh.shotsAttempted) * 100 || 0).toFixed(2)}%`).join("\n")}`;
+  const body = `Match Information:\nDate: ${document.getElementById('date').value}\nLocation: ${document.getElementById('location').value}\nTeam A: ${document.getElementById('teamA').value}\nTeam B: ${document.getElementById('teamB').value}\n\nGoalkeeper Stats:\n${players.filter(p => p.saves > 0 || p.goalsConceded > 0).map(gk => `${gk.name} (${gk.number}): Saves - ${gk.saves}, Goals Conceded - ${gk.goalsConceded}, Save % - ${((gk.saves / (gk.saves + gk.goalsConceded)) * 100 || 0).toFixed(2)}%`).join("\n")}\n\nShooter Stats:\n${players.filter(p => p.shotsAttempted > 0).map(sh => `${sh.name} (${sh.number}): Shots Attempted - ${sh.shotsAttempted}, Goals Scored - ${sh.goalsScored}, Shooting % - ${((sh.goalsScored / sh.shotsAttempted) * 100 || 0).toFixed(2)}%`).join("\n")}`;
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

@@ -19,6 +19,13 @@
       <input type="text" id="teamB" placeholder="Team B" oninput="updateTeamName('teamB')">
     </div>
 
+    <!-- Upload Team Lists -->
+    <div class="section">
+      <h2>Upload Team Lists (CSV)</h2>
+      <input type="file" id="teamFile" accept=".csv">
+      <button onclick="uploadTeamList()">Upload</button>
+    </div>
+
     <!-- Player List -->
     <div class="section">
       <h2 id="teamAName">Team A Roster</h2>
@@ -48,6 +55,7 @@
       <p id="timer">30:00</p>
       <button onclick="startTimer()">Start</button>
       <button onclick="stopTimer()">Stop</button>
+      <button onclick="resetTimer()">Reset</button>
     </div>
 
     <!-- Goalkeeper Stats -->
