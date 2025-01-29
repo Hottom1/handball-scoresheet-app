@@ -19,13 +19,6 @@
       <input type="text" id="teamB" placeholder="Team B" oninput="updateTeamName('teamB')">
     </div>
 
-    <!-- Upload Team Lists -->
-    <div class="section">
-      <h2>Upload Team Lists (CSV)</h2>
-      <input type="file" id="teamFile" accept=".csv">
-      <button onclick="uploadTeamList()">Upload</button>
-    </div>
-
     <!-- Player List -->
     <div class="section">
       <h2 id="teamAName">Team A Roster</h2>
@@ -70,13 +63,134 @@
       <div id="shooterStats"></div>
     </div>
 
-    <!-- Export Options -->
+    <!-- Import & Export Options -->
     <div class="section">
-      <h2>Export</h2>
+      <h2>Import & Export</h2>
+      <input type="file" id="importFile" accept=".csv">
+      <button onclick="importTeamList()">Import Team List</button>
       <button onclick="exportData()">Export as CSV</button>
       <button onclick="emailData()">Email Data</button>
     </div>
   </div>
-  <script src="app.js"></script>
+
+  <script>
+    let teamAScore = 0;
+    let teamBScore = 0;
+    let timer = 1800; // 30 minutes in seconds
+    let interval;
+    let players = [];
+
+    // Add Player to Roster
+    function addPlayer(rosterId) {
+      const number = prompt("Enter player number:");
+      const name = prompt("Enter player name:");
+      if (!number || !name) {
+        alert("Player number and name are required.");
+        return;
+      }
+      const table = document.getElementById(rosterId);
+      const row = table.insertRow(-1);
+      const cell1 = row.insertCell(0);
+      const cell2 = row.insertCell(1);
+      const cell3 = row.insertCell(2);
+      cell1.textContent = number;
+      cell2.textContent = name;
+      cell3.innerHTML = `
+        <div class="actions">
+          <button onclick="recordShot('${rosterId}', ${number}, '${name}', true)">Goal Scored</button>
+          <button onclick="recordShot('${rosterId}', ${number}, '${name}', false)">Shot Missed</button>
+          <button onclick="recordSave('${rosterId}', ${number}, '${name}')">Save Made</button>
+        </div>
+      `;
+      players.push({ rosterId, number, name, shotsAttempted: 0, goalsScored: 0, saves: 0, goalsConceded: 0 });
+    }
+
+    // Record Shot (Goal Scored or Shot Missed)
+    function recordShot(rosterId, number, name, isGoal) {
+      const player = players.find(p => p.rosterId === rosterId && p.number == number);
+      if (player) {
+        player.shotsAttempted++;
+        if (isGoal) {
+          player.goalsScored++;
+          if (rosterId === 'rosterA') {
+            teamAScore++;
+            document.getElementById('scoreA').textContent = teamAScore;
+          } else {
+            teamBScore++;
+            document.getElementById('scoreB').textContent = teamBScore;
+          }
+        }
+        updateShooterStats();
+      }
+    }
+
+    // Record Save
+    function recordSave(rosterId, number, name) {
+      const player = players.find(p => p.rosterId === rosterId && p.number == number);
+      if (player) {
+        player.saves++;
+        updateGoalkeeperStats();
+      }
+    }
+
+    // Update Goalkeeper Stats
+    function updateGoalkeeperStats() {
+      const statsDiv = document.getElementById('goalkeeperStats');
+      statsDiv.innerHTML = '<h3>Goalkeepers</h3>';
+      players.filter(p => p.saves > 0).forEach(gk => {
+        statsDiv.innerHTML += `
+          <p>${gk.name} (${gk.number}): Saves - ${gk.saves}, Goals Conceded - ${gk.goalsConceded}, Save % - ${((gk.saves / (gk.saves + gk.goalsConceded)) * 100 || 0).toFixed(2)}%</p>
+        `;
+      });
+    }
+
+    // Update Shooter Stats
+    function updateShooterStats() {
+      const statsDiv = document.getElementById('shooterStats');
+      statsDiv.innerHTML = '<h3>Shooters</h3>';
+      players.filter(p => p.shotsAttempted > 0).forEach(sh => {
+        statsDiv.innerHTML += `
+          <p>${sh.name} (${sh.number}): Shots Attempted - ${sh.shotsAttempted}, Goals Scored - ${sh.goalsScored}, Shooting % - ${((sh.goalsScored / sh.shotsAttempted) * 100 || 0).toFixed(2)}%</p>
+        `;
+      });
+    }
+
+    // Update Team Names
+    function updateTeamName(teamId) {
+      const teamName = document.getElementById(teamId).value;
+      if (teamId === 'teamA') {
+        document.getElementById('teamAName').textContent = `${teamName} Roster`;
+        document.getElementById('teamAScoreName').textContent = teamName;
+      } else {
+        document.getElementById('teamBName').textContent = `${teamName} Roster`;
+        document.getElementById('teamBScoreName').textContent = teamName;
+      }
+    }
+
+    // Start Timer
+    function startTimer() {
+      clearInterval(interval);
+      interval = setInterval(() => {
+        timer--;
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
+        document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        if (timer <= 0) clearInterval(interval);
+      }, 1000);
+    }
+
+    // Stop Timer
+    function stopTimer() {
+      clearInterval(interval);
+    }
+
+    // Reset Timer
+    function resetTimer() {
+      clearInterval(interval);
+      timer = 1800;
+      document.getElementById('timer').textContent = '30:00';
+    }
+  </script>
 </body>
 </html>
+
